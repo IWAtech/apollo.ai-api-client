@@ -1,0 +1,29 @@
+{
+  "name": "apollo-ai-api-client",
+  "version": "0.1.0",
+  "description": "apollo-ai-api-client",
+  "author": "APOLLO.AI",
+  "private": false,
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf lib",
+    "lint": "tslint -c tslint.json verbose \"src/**/*.ts\"",
+    "build": "yarn run lint && echo Using TypeScript && tsc --version && tsc --pretty -p ."
+  },
+  "dependencies": {
+    "node-fetch": "^1.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.14",
+    "@types/node-fetch": "^1.6.7",
+    "tslint": "^5.4.3",
+    "typescript": "^2.4.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}
