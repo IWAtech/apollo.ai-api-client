@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
 export interface IAutoAbstractResponse {
-  sentences: [string];
+  sentences: string[];
   detectedLanguage: string;
   processedLanguage: string;
   input: any;
