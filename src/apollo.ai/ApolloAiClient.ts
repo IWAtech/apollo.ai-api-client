@@ -1,10 +1,10 @@
 import fetch from 'node-fetch';
 
 export interface IAutoAbstractResponse {
-  sentences: [string];
-  detectedLanguage: string;
-  processedLanguage: string;
-  input: any;
+  sentences: string[];
+  detectedLanguage?: string;
+  processedLanguage?: string;
+  input?: any;
   type: string;
   url: string;
 }
@@ -36,7 +36,6 @@ export class ApolloAiClient {
   constructor(protected apiKey: string) {}
 
   public async autoabstract(headline: string, text: string, maxCharacters = 400, keywords?: string[]): Promise<IAutoAbstractResponse> {
-
     const body = {
       headline,
       text,
