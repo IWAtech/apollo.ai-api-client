@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import * as URL from 'url';
 
 export interface IAutoAbstractResponse {
   sentences: string[];
@@ -16,7 +17,7 @@ export interface IClusteringResponse {
 }
 
 export interface IClusteringArticle {
-  id: string;
+  identifier: string;
   title: string;
   content: string;
   link?: string;
@@ -80,9 +81,12 @@ export class ApolloAiClient {
 
   public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
 
-    const url = new URL(this.apolloApiEndpoint + '/clustering');
+    const url = new URL.URL(this.apolloApiEndpoint + 'clustering');
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
+
+    console.log('Requesting: ' + url.toString());
+    // console.log('Body: ' + JSON.stringify(articles, null, 2));
 
     const collectionResult = await fetch(url.toString(), {
       method: 'POST',

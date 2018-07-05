@@ -18,7 +18,7 @@
   "typings": "lib/index.d.ts",
   "scripts": {
     "clean": "rm -rf lib",
-    "lint": "tslint -c tslint.json verbose \"src/**/*.ts\"",
+    "lint": "tslint -c tslint.json \"src/**/*.ts\"",
     "build": "yarn run lint && echo Using TypeScript && tsc --version && tsc --pretty -p ."
   },
   "dependencies": {
