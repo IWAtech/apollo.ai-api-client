@@ -29,19 +29,33 @@ export enum ClusteringLanguage {
   de = 'de',
 }
 
+export interface IAbstractInputBody {
+  headline: string;
+  text: string;
+  maxSentences?: number;
+  maxCharacters?: number;
+  keywords: string;
+}
+
 export class ApolloAiClient {
 
   public apolloApiEndpoint = 'https://api.apollo.ai/';
 
   constructor(protected apiKey: string) {}
 
-  public async autoabstract(headline: string, text: string, maxCharacters = 400, keywords?: string[]): Promise<IAutoAbstractResponse> {
-    const body = {
+  public async autoabstract(
+    headline: string, text: string, maxCharacters = 400, keywords?: string[], maxSentences: number = null): Promise<IAutoAbstractResponse> {
+    const body: IAbstractInputBody = {
       headline,
       text,
-      maxCharacters,
       keywords: '',
     };
+
+    if (maxSentences) {
+      body.maxSentences = maxSentences;
+    } else {
+      body.maxCharacters = maxCharacters;
+    }
 
     if (keywords) {
       body.keywords = keywords.join(',');
