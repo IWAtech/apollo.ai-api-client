@@ -85,9 +85,6 @@ export class ApolloAiClient {
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
 
-    console.log('Requesting: ' + url.toString());
-    // console.log('Body: ' + JSON.stringify(articles, null, 2));
-
     const collectionResult = await fetch(url.toString(), {
       method: 'POST',
       headers: {
