@@ -41,6 +41,8 @@ export interface IAbstractInputBody {
 export class ApolloAiClient {
 
   public apolloApiEndpoint = 'https://api.apollo.ai/';
+  public clusteringEndpoint = 'clustering';
+  public autoAbstractEndpoint = 'autoabstract';
 
   constructor(protected apiKey: string) {}
 
@@ -62,7 +64,7 @@ export class ApolloAiClient {
       body.keywords = keywords.join(',');
     }
 
-    const response = await fetch(this.apolloApiEndpoint + 'autoabstract', {
+    const response = await fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -81,7 +83,7 @@ export class ApolloAiClient {
 
   public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
 
-    const url = new URL.URL(this.apolloApiEndpoint + 'clustering');
+    const url = new URL.URL(this.apolloApiEndpoint + this.clusteringEndpoint);
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
 
