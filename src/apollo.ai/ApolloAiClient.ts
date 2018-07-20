@@ -43,6 +43,7 @@ export class ApolloAiClient {
   public apolloApiEndpoint = 'https://api.apollo.ai/';
   public clusteringEndpoint = 'clustering';
   public autoAbstractEndpoint = 'autoabstract';
+  public debug = false;
 
   constructor(protected apiKey: string) {}
 
@@ -64,13 +65,22 @@ export class ApolloAiClient {
       body.keywords = keywords.join(',');
     }
 
-    const response = await fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
+    const url = this.apolloApiEndpoint + this.autoAbstractEndpoint;
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + this.apiKey,
+    };
+
+    if (this.debug) {
+      console.log(url);
+      console.log(headers);
+      console.log(body);
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + this.apiKey,
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
