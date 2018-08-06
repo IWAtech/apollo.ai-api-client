@@ -47,7 +47,7 @@ export class ApolloAiClient {
 
   constructor(protected apiKey: string) {}
 
-  private async executeAutoabstract(body: IAbstractInputBody) {
+  private async executeAutoabstract(body: IAbstractInputBody, debug: boolean = false) {
     const response = await fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
       method: 'POST',
       headers: {
@@ -55,7 +55,7 @@ export class ApolloAiClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + this.apiKey,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(Object.assign({ debug }, body)),
     });
 
     if (response.status !== 200) {
@@ -67,11 +67,11 @@ export class ApolloAiClient {
 
   public async autoabstractUrl(
     url: string, maxCharacters = 400,
-    keywords?: string[], maxSentences?: number): Promise<IAutoAbstractResponse> {
+    keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
 
     const body: IAbstractInputBody = {
       url,
-      keywords: '',
+      keywords: keywords ? keywords.join(',') : '',
     };
 
     if (maxSentences) {
@@ -80,20 +80,16 @@ export class ApolloAiClient {
       body.maxCharacters = maxCharacters;
     }
 
-    if (keywords) {
-      body.keywords = keywords.join(',');
-    }
-
-    return await this.executeAutoabstract(body);
+    return await this.executeAutoabstract(body, debug);
   }
 
   public async autoabstract(
     headline: string, text: string, maxCharacters = 400,
-    keywords?: string[], maxSentences?: number): Promise<IAutoAbstractResponse> {
+    keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
     const body: IAbstractInputBody = {
       headline,
       text,
-      keywords: '',
+      keywords: keywords ? keywords.join(',') : '',
     };
 
     if (maxSentences) {
@@ -102,11 +98,7 @@ export class ApolloAiClient {
       body.maxCharacters = maxCharacters;
     }
 
-    if (keywords) {
-      body.keywords = keywords.join(',');
-    }
-
-    return await this.executeAutoabstract(body);
+    return await this.executeAutoabstract(body, debug);
   }
 
   public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
