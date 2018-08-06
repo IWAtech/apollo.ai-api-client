@@ -44,7 +44,8 @@ export class ApolloAiClient {
   constructor(protected apiKey: string) {}
 
   public async autoabstract(
-    headline: string, text: string, maxCharacters = 400, keywords?: string[], maxSentences: number = null): Promise<IAutoAbstractResponse> {
+    headline: string, text: string, maxCharacters = 400,
+    keywords?: string[], maxSentences?: number): Promise<IAutoAbstractResponse> {
     const body: IAbstractInputBody = {
       headline,
       text,
