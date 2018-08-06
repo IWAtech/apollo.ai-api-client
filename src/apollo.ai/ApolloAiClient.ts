@@ -31,11 +31,12 @@ export enum ClusteringLanguage {
 }
 
 export interface IAbstractInputBody {
-  headline: string;
-  text: string;
+  headline?: string;
+  text?: string;
+  url?: string;
   maxSentences?: number;
   maxCharacters?: number;
-  keywords: string;
+  keywords?: string;
 }
 
 export class ApolloAiClient {
@@ -45,6 +46,46 @@ export class ApolloAiClient {
   public autoAbstractEndpoint = 'autoabstract';
 
   constructor(protected apiKey: string) {}
+
+  private async executeAutoabstract(body: IAbstractInputBody) {
+    const response = await fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + this.apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status !== 200) {
+      throw Error('Received invalid response from autoabstract endpoint');
+    }
+
+    return await response.json();
+  }
+
+  public async autoabstractUrl(
+    url: string, maxCharacters = 400,
+    keywords?: string[], maxSentences?: number): Promise<IAutoAbstractResponse> {
+
+    const body: IAbstractInputBody = {
+      url,
+      keywords: '',
+    };
+
+    if (maxSentences) {
+      body.maxSentences = maxSentences;
+    } else {
+      body.maxCharacters = maxCharacters;
+    }
+
+    if (keywords) {
+      body.keywords = keywords.join(',');
+    }
+
+    return await this.executeAutoabstract(body);
+  }
 
   public async autoabstract(
     headline: string, text: string, maxCharacters = 400,
@@ -65,21 +106,7 @@ export class ApolloAiClient {
       body.keywords = keywords.join(',');
     }
 
-    const response = await fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + this.apiKey,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (response.status !== 200) {
-      throw Error('Received invalid response from autoabstract endpoint');
-    }
-
-    return await response.json();
+    return await this.executeAutoabstract(body);
   }
 
   public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
