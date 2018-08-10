@@ -30,6 +30,15 @@ export enum ClusteringLanguage {
   de = 'de',
 }
 
+export interface IArticle {
+  id: string;
+  headline?: string;
+  content: string;
+  url?: string;
+  date?: Date;
+  abstract?: string[];
+}
+
 export interface IAbstractInputBody {
   headline?: string;
   text?: string;
@@ -43,6 +52,8 @@ export class ApolloAiClient {
 
   public apolloApiEndpoint = 'https://api.apollo.ai/';
   public clusteringEndpoint = 'clustering';
+  // todo add endpoint
+  public continuedClusteringEndpoint = 'continuedClustering';
   public autoAbstractEndpoint = 'autoabstract';
 
   constructor(protected apiKey: string) {}
@@ -65,6 +76,7 @@ export class ApolloAiClient {
     return await response.json();
   }
 
+  // Endpoint Autoabstract URL
   public async autoabstractUrl(
     url: string, maxCharacters = 400,
     keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
@@ -83,6 +95,7 @@ export class ApolloAiClient {
     return await this.executeAutoabstract(body, debug);
   }
 
+  // Endpoint Autoabstract
   public async autoabstract(
     headline: string, text: string, maxCharacters = 400,
     keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
@@ -101,8 +114,8 @@ export class ApolloAiClient {
     return await this.executeAutoabstract(body, debug);
   }
 
+  // Endpoint Clustering
   public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
-
     const url = new URL.URL(this.apolloApiEndpoint + this.clusteringEndpoint);
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
@@ -119,6 +132,30 @@ export class ApolloAiClient {
     });
     const clusterResult = await collectionResult.json();
     return clusterResult;
+  }
+
+  // Endpoint continuedClustering + Autoabstract
+  public async continuedClustering(newArticles: IArticle[] | string[], presentArticles: IArticle[] = [], abstractMaxChars: number = 500) {
+    const url = new URL.URL(this.apolloApiEndpoint + this.continuedClusteringEndpoint);
+
+    const parameters = {
+      newArticles,
+      result: presentArticles,
+      abstractMaxChars,
+    };
+
+    const clusteringResult = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + this.apiKey,
+      },
+      body: JSON.stringify(parameters),
+      timeout: 300000,
+    });
+
+    return await clusteringResult.json();
   }
 
 }
