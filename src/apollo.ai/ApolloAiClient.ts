@@ -39,6 +39,12 @@ export interface IArticle {
   abstract?: string[];
 }
 
+export interface IContinuesClusteringInput {
+  newArticles: IArticle[] | string[];
+  result?: any;
+  abstractMaxChars?: number;
+}
+
 export interface IAbstractInputBody {
   headline?: string;
   text?: string;
@@ -138,11 +144,14 @@ export class ApolloAiClient {
   public async continuedClustering(newArticles: IArticle[] | string[], presentArticles: IArticle[] = [], abstractMaxChars: number = 500) {
     // const url = new URL.URL(this.apolloApiEndpoint + this.continuedClusteringEndpoint);
     // const url = new URL.URL(this.continuedClusteringEndpoint);
-    const parameters = {
+    const parameters: IContinuesClusteringInput = {
       newArticles,
-      result: presentArticles,
       abstractMaxChars,
     };
+
+    if (presentArticles && presentArticles.length > 0) {
+      parameters.result = presentArticles;
+    }
 
     const clusteringResult = await fetch(this.continuedClusteringEndpoint, {
       method: 'POST',
