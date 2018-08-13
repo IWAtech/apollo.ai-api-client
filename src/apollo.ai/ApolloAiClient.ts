@@ -41,8 +41,13 @@ export interface IArticle {
 
 export interface IContinuesClusteringInput {
   newArticles: IArticle[] | string[];
-  result?: any;
+  result?: IContinuesClusteringResultItem[];
   abstractMaxChars?: number;
+}
+
+export interface IContinuesClusteringResultItem {
+  article: IArticle;
+  related: string[];
 }
 
 export interface IAbstractInputBody {
@@ -141,7 +146,10 @@ export class ApolloAiClient {
   }
 
   // Endpoint continuedClustering + Autoabstract
-  public async continuedClustering(newArticles: IArticle[] | string[], presentArticles: IArticle[] = [], abstractMaxChars: number = 500) {
+  public async continuedClustering(
+    newArticles: IArticle[] | string[],
+    presentArticles: IContinuesClusteringResultItem[] = [],
+    abstractMaxChars: number = 500) {
     // const url = new URL.URL(this.apolloApiEndpoint + this.continuedClusteringEndpoint);
     // const url = new URL.URL(this.continuedClusteringEndpoint);
     const parameters: IContinuesClusteringInput = {
@@ -163,10 +171,6 @@ export class ApolloAiClient {
       body: JSON.stringify(parameters),
       timeout: 300000,
     });
-
-    /*if (clusteringResult.status !== 200) {
-      throw Error('Received invalid response from continuedClustering endpoint');
-    }*/
 
     return await clusteringResult.json();
   }
