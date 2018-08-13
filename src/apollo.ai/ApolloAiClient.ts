@@ -137,14 +137,14 @@ export class ApolloAiClient {
   // Endpoint continuedClustering + Autoabstract
   public async continuedClustering(newArticles: IArticle[] | string[], presentArticles: IArticle[] = [], abstractMaxChars: number = 500) {
     // const url = new URL.URL(this.apolloApiEndpoint + this.continuedClusteringEndpoint);
-    const url = new URL.URL(this.continuedClusteringEndpoint);
+    // const url = new URL.URL(this.continuedClusteringEndpoint);
     const parameters = {
       newArticles,
       result: presentArticles,
       abstractMaxChars,
     };
 
-    const clusteringResult = await fetch(url.toString(), {
+    const clusteringResult = await fetch(this.continuedClusteringEndpoint, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -154,6 +154,10 @@ export class ApolloAiClient {
       body: JSON.stringify(parameters),
       timeout: 300000,
     });
+
+    /*if (clusteringResult.status !== 200) {
+      throw Error('Received invalid response from continuedClustering endpoint');
+    }*/
 
     return await clusteringResult.json();
   }
