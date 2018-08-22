@@ -39,10 +39,16 @@ export interface IArticle {
   abstract?: string[];
 }
 
+export interface IContinuesClusteringOptions {
+  abstractMaxChars?: number;
+  keywords?: string[];
+  // todo threshold
+}
+
 export interface IContinuesClusteringInput {
   newArticles: IArticle[] | string[];
   result?: IContinuesClusteringResultItem[];
-  abstractMaxChars?: number;
+  options?: IContinuesClusteringOptions;
 }
 
 export interface IContinuesClusteringResultItem {
@@ -149,19 +155,26 @@ export class ApolloAiClient {
   public async continuedClustering(
     newArticles: IArticle[] | string[],
     presentArticles: IContinuesClusteringResultItem[] = [],
-    abstractMaxChars: number = 500) {
+    options: IContinuesClusteringOptions = {}) {
     // const url = new URL.URL(this.apolloApiEndpoint + this.continuedClusteringEndpoint);
     // const url = new URL.URL(this.continuedClusteringEndpoint);
-    const parameters: IContinuesClusteringInput = {
-      newArticles,
-      abstractMaxChars,
-    };
+    const parameters: IContinuesClusteringInput = {newArticles};
 
     if (presentArticles && presentArticles.length > 0) {
       parameters.result = presentArticles;
     }
 
-    const clusteringResult = await fetch(this.continuedClusteringEndpoint, {
+    const url = new URL.URL(this.continuedClusteringEndpoint);
+
+    if (options.abstractMaxChars) {
+      url.searchParams.append('maxChars', options.abstractMaxChars.toString());
+    }
+
+    if (options.keywords) {
+      url.searchParams.append('keywords', options.keywords.join(','));
+    }
+
+    const clusteringResult = await fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
