@@ -42,7 +42,7 @@ export interface IArticle {
 export interface IContinuesClusteringOptions {
   abstractMaxChars?: number;
   keywords?: string[];
-  // todo threshold
+  threshold?: number;
 }
 
 export interface IContinuesClusteringInput {
@@ -172,6 +172,10 @@ export class ApolloAiClient {
 
     if (options.keywords) {
       url.searchParams.append('keywords', options.keywords.join(','));
+    }
+
+    if (options.threshold) {
+      url.searchParams.append('threshold', options.threshold.toString());
     }
 
     const clusteringResult = await fetch(url.toString(), {
