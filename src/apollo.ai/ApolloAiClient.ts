@@ -70,8 +70,9 @@ export class ApolloAiClient {
   public apolloApiEndpoint = 'https://api.apollo.ai/';
   public clusteringEndpoint = 'clustering';
   // todo replace staging endpoint
-  public continuedClusteringEndpoint = 'https://beta.apollo.ai/api/combinedapi';
+  // public continuedClusteringEndpoint = 'https://beta.apollo.ai/api/combinedapi';
   public autoAbstractEndpoint = 'autoabstract';
+  public combinedApiEndpoint = 'combinedapi';
 
   constructor(protected apiKey: string) {}
 
@@ -156,15 +157,13 @@ export class ApolloAiClient {
     newArticles: IArticle[] | string[],
     presentArticles: IContinuesClusteringResultItem[] = [],
     options: IContinuesClusteringOptions = {}) {
-    // const url = new URL.URL(this.apolloApiEndpoint + this.continuedClusteringEndpoint);
-    // const url = new URL.URL(this.continuedClusteringEndpoint);
     const parameters: IContinuesClusteringInput = {newArticles};
 
     if (presentArticles && presentArticles.length > 0) {
       parameters.result = presentArticles;
     }
 
-    const url = new URL.URL(this.continuedClusteringEndpoint);
+    const url = new URL.URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
 
     if (options.abstractMaxChars) {
       url.searchParams.append('maxChars', options.abstractMaxChars.toString());
