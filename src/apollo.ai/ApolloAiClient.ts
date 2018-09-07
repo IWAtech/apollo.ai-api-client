@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import * as URL from 'url';
+import { URL } from 'url';
 
 export interface IAutoAbstractResponse {
   sentences: string[];
@@ -135,7 +135,7 @@ export class ApolloAiClient {
 
   // Endpoint Clustering
   public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
-    const url = new URL.URL(this.apolloApiEndpoint + this.clusteringEndpoint);
+    const url = new URL(this.apolloApiEndpoint + this.clusteringEndpoint);
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
 
@@ -164,9 +164,9 @@ export class ApolloAiClient {
       parameters.result = presentArticles;
     }
 
-    const url = new URL.URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
+    const url = new URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
 
-    if (options.abstractMaxChars) {
+    if (options.abstractMaxChars !== undefined) {
       url.searchParams.append('maxChars', options.abstractMaxChars.toString());
     }
 
@@ -174,7 +174,7 @@ export class ApolloAiClient {
       url.searchParams.append('keywords', options.keywords.join(','));
     }
 
-    if (options.threshold) {
+    if (options.threshold !== undefined) {
       url.searchParams.append('threshold', options.threshold.toString());
     }
 
