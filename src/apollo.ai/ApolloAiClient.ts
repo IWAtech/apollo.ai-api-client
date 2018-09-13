@@ -77,8 +77,8 @@ export class ApolloAiClient {
 
   constructor(protected apiKey: string) {}
 
-  private async executeAutoabstract(body: IAbstractInputBody, debug: boolean = false) {
-    const response = await fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
+  private executeAutoabstract(body: IAbstractInputBody, debug: boolean = false) {
+    return fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -86,17 +86,19 @@ export class ApolloAiClient {
         'Authorization': 'Bearer ' + this.apiKey,
       },
       body: JSON.stringify(Object.assign({ debug }, body)),
+    }).then((response) => {
+      if (response.status !== 200) {
+        return Promise.reject({ message: 'Received invalid response from autoabstract endpoint', error: response.text() });
+      } else {
+        return response.json();
+      }
+    }).catch((err) => {
+      return Promise.reject({ message: 'Received invalid response from autoabstract endpoint', error: err });
     });
-
-    if (response.status !== 200) {
-      throw Error('Received invalid response from autoabstract endpoint');
-    }
-
-    return await response.json();
   }
 
   // Endpoint Autoabstract URL
-  public async autoabstractUrl(
+  public autoabstractUrl(
     url: string, maxCharacters = 400,
     keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
 
@@ -111,11 +113,11 @@ export class ApolloAiClient {
       body.maxCharacters = maxCharacters;
     }
 
-    return await this.executeAutoabstract(body, debug);
+    return this.executeAutoabstract(body, debug);
   }
 
   // Endpoint Autoabstract
-  public async autoabstract(
+  public autoabstract(
     headline: string, text: string, maxCharacters = 400,
     keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
     const body: IAbstractInputBody = {
@@ -130,16 +132,16 @@ export class ApolloAiClient {
       body.maxCharacters = maxCharacters;
     }
 
-    return await this.executeAutoabstract(body, debug);
+    return this.executeAutoabstract(body, debug);
   }
 
   // Endpoint Clustering
-  public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
+  public clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de) {
     const url = new URL(this.apolloApiEndpoint + this.clusteringEndpoint);
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
 
-    const collectionResult = await fetch(url.toString(), {
+    return fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -148,13 +150,11 @@ export class ApolloAiClient {
       },
       body: JSON.stringify(articles),
       timeout: 300000,
-    });
-    const clusterResult = await collectionResult.json();
-    return clusterResult;
+    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse[]>);
   }
 
   // Endpoint continuedClustering + Autoabstract
-  public async continuedClustering(
+  public continuedClustering(
     newArticles: IArticle[] | string[],
     presentArticles: IContinuesClusteringResultItem[] = [],
     options: IContinuesClusteringOptions = {}) {
@@ -182,7 +182,7 @@ export class ApolloAiClient {
       url.searchParams.append('language', options.language);
     }
 
-    const clusteringResult = await fetch(url.toString(), {
+    return fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -191,9 +191,7 @@ export class ApolloAiClient {
       },
       body: JSON.stringify(parameters),
       timeout: 300000,
-    });
-
-    return await clusteringResult.json();
+    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse[]>);
   }
 
 }
