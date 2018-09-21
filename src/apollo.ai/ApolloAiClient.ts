@@ -16,6 +16,12 @@ export interface IClusteringResponse {
   data: IClusteringArticle[][];
 }
 
+export interface IContinuousClusteringResponse {
+  status: number;
+  message: string;
+  data: IClusteringArticle[][];
+}
+
 export interface IClusteringArticle {
   identifier: string;
   title: string;
@@ -39,20 +45,27 @@ export interface IArticle {
   abstract?: string[];
 }
 
-export interface IContinuesClusteringOptions {
+export interface IContinuousClusteringOptions {
   abstractMaxChars?: number;
   keywords?: string[];
   threshold?: number;
   language?: ClusteringLanguage;
 }
 
-export interface IContinuesClusteringInput {
-  newArticles: IArticle[] | string[];
-  result?: IContinuesClusteringResultItem[];
-  options?: IContinuesClusteringOptions;
+export interface IContinuousClustering {
+  newArticles?: IArticle[] | string[];
+  result?: IContinuousClusteringResultItem[];
 }
 
-export interface IContinuesClusteringResultItem {
+export interface IContinuousClusteringInput extends IContinuousClustering {
+  options?: IContinuousClusteringOptions;
+}
+
+export interface IContinuousClusteringResponse extends IContinuousClustering {
+  invalidArticles: Array<string | IArticle>;
+}
+
+export interface IContinuousClusteringResultItem {
   article: IArticle;
   related: string[];
 }
@@ -157,9 +170,10 @@ export class ApolloAiClient {
   // Endpoint continuedClustering + Autoabstract
   public continuedClustering(
     newArticles: IArticle[] | string[],
-    presentArticles: IContinuesClusteringResultItem[] = [],
-    options: IContinuesClusteringOptions = {}) {
-    const parameters: IContinuesClusteringInput = {newArticles};
+    presentArticles: IContinuousClusteringResultItem[] = [],
+    options: IContinuousClusteringOptions = {}): Promise<IContinuousClusteringResponse> {
+
+    const parameters: IContinuousClusteringInput = {newArticles};
 
     if (presentArticles && presentArticles.length > 0) {
       parameters.result = presentArticles;
@@ -192,7 +206,7 @@ export class ApolloAiClient {
       },
       body: JSON.stringify(parameters),
       timeout: 300000,
-    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse[]>);
+    }).then((clusteringResult) => clusteringResult.json() as Promise<IContinuousClusteringResponse>);
   }
 
 }
