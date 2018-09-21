@@ -164,7 +164,7 @@ export class ApolloAiClient {
       },
       body: JSON.stringify(articles),
       timeout: 300000,
-    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse[]>);
+    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse>);
   }
 
   // Endpoint continuedClustering + Autoabstract
