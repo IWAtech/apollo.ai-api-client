@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import * as URL from 'url';
+import { URL } from 'url';
 
 export interface IAutoAbstractResponse {
   sentences: string[];
@@ -30,29 +30,82 @@ export enum ClusteringLanguage {
   de = 'de',
 }
 
+export interface IArticle {
+  id: string;
+  headline?: string;
+  content: string;
+  url?: string;
+  date?: Date;
+  abstract?: string[];
+}
+
+export interface IContinuesClusteringOptions {
+  abstractMaxChars?: number;
+  keywords?: string[];
+  threshold?: number;
+  language?: ClusteringLanguage;
+}
+
+export interface IContinuesClusteringInput {
+  newArticles: IArticle[] | string[];
+  result?: IContinuesClusteringResultItem[];
+  options?: IContinuesClusteringOptions;
+}
+
+export interface IContinuesClusteringResultItem {
+  article: IArticle;
+  related: string[];
+}
+
 export interface IAbstractInputBody {
-  headline: string;
-  text: string;
+  headline?: string;
+  text?: string;
+  url?: string;
   maxSentences?: number;
   maxCharacters?: number;
-  keywords: string;
+  keywords?: string;
 }
 
 export class ApolloAiClient {
 
   public apolloApiEndpoint = 'https://api.apollo.ai/';
   public clusteringEndpoint = 'clustering';
+  // todo replace staging endpoint
+  // public continuedClusteringEndpoint = 'https://beta.apollo.ai/api/combinedapi';
   public autoAbstractEndpoint = 'autoabstract';
   public debug = false;
+  public combinedApiEndpoint = 'combinedapi';
 
   constructor(protected apiKey: string) {}
 
-  public async autoabstract(
-    headline: string, text: string, maxCharacters = 400, keywords?: string[], maxSentences: number = null): Promise<IAutoAbstractResponse> {
+  private executeAutoabstract(body: IAbstractInputBody, debug: boolean = false) {
+    return fetch(this.apolloApiEndpoint + this.autoAbstractEndpoint, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + this.apiKey,
+      },
+      body: JSON.stringify(Object.assign({ debug }, body)),
+    }).then((response) => {
+      if (response.status !== 200) {
+        return Promise.reject({ message: 'Received invalid response from autoabstract endpoint', error: response.text() });
+      } else {
+        return response.json();
+      }
+    }).catch((err) => {
+      return Promise.reject({ message: 'Received invalid response from autoabstract endpoint', error: err });
+    });
+  }
+
+  // Endpoint Autoabstract URL
+  public autoabstractUrl(
+    url: string, maxCharacters = 400,
+    keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
+
     const body: IAbstractInputBody = {
-      headline,
-      text,
-      keywords: '',
+      url,
+      keywords: keywords ? keywords.join(',') : '',
     };
 
     if (maxSentences) {
@@ -61,43 +114,35 @@ export class ApolloAiClient {
       body.maxCharacters = maxCharacters;
     }
 
-    if (keywords) {
-      body.keywords = keywords.join(',');
-    }
-
-    const url = this.apolloApiEndpoint + this.autoAbstractEndpoint;
-    const headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + this.apiKey,
-    };
-
-    if (this.debug) {
-      console.log(url);
-      console.log(headers);
-      console.log(body);
-    }
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (response.status !== 200) {
-      throw Error('Received invalid response from autoabstract endpoint');
-    }
-
-    return await response.json();
+    return this.executeAutoabstract(body, debug);
   }
 
-  public async clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de): Promise<IClusteringResponse> {
+  // Endpoint Autoabstract
+  public autoabstract(
+    headline: string, text: string, maxCharacters = 400,
+    keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
+    const body: IAbstractInputBody = {
+      headline,
+      text,
+      keywords: keywords ? keywords.join(',') : '',
+    };
 
-    const url = new URL.URL(this.apolloApiEndpoint + this.clusteringEndpoint);
+    if (maxSentences) {
+      body.maxSentences = maxSentences;
+    } else {
+      body.maxCharacters = maxCharacters;
+    }
+
+    return this.executeAutoabstract(body, debug);
+  }
+
+  // Endpoint Clustering
+  public clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de) {
+    const url = new URL(this.apolloApiEndpoint + this.clusteringEndpoint);
     url.searchParams.append('threshold', threshold.toString());
     url.searchParams.append('language', language);
 
-    const collectionResult = await fetch(url.toString(), {
+    return fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -106,9 +151,48 @@ export class ApolloAiClient {
       },
       body: JSON.stringify(articles),
       timeout: 300000,
-    });
-    const clusterResult = await collectionResult.json();
-    return clusterResult;
+    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse[]>);
+  }
+
+  // Endpoint continuedClustering + Autoabstract
+  public continuedClustering(
+    newArticles: IArticle[] | string[],
+    presentArticles: IContinuesClusteringResultItem[] = [],
+    options: IContinuesClusteringOptions = {}) {
+    const parameters: IContinuesClusteringInput = {newArticles};
+
+    if (presentArticles && presentArticles.length > 0) {
+      parameters.result = presentArticles;
+    }
+
+    const url = new URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
+
+    if (options.abstractMaxChars !== undefined) {
+      url.searchParams.append('maxChars', options.abstractMaxChars.toString());
+    }
+
+    if (options.keywords) {
+      url.searchParams.append('keywords', options.keywords.join(','));
+    }
+
+    if (options.threshold !== undefined) {
+      url.searchParams.append('threshold', options.threshold.toString());
+    }
+
+    if (options.language) {
+      url.searchParams.append('language', options.language);
+    }
+
+    return fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + this.apiKey,
+      },
+      body: JSON.stringify(parameters),
+      timeout: 300000,
+    }).then((clusteringResult) => clusteringResult.json() as Promise<IClusteringResponse[]>);
   }
 
 }
