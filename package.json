@@ -1,6 +1,6 @@
 {
   "name": "apollo-ai-api-client",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Client for the apollo.ai auto abstract api.",
   "keywords": [
     "api client",
