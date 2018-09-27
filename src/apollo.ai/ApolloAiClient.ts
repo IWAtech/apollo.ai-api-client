@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { URL } from 'url';
+import * as _ from 'lodash';
 
 export interface IAutoAbstractResponse {
   sentences: string[];
@@ -53,7 +54,7 @@ export interface IContinuousClusteringOptions {
 }
 
 export interface IContinuousClustering {
-  newArticles?: IArticle[] | string[];
+  newArticles?: Array<IArticle | string>;
   result?: IContinuousClusteringResultItem[];
 }
 
@@ -113,11 +114,11 @@ export class ApolloAiClient {
 
   // Endpoint Autoabstract URL
   public autoabstractUrl(
-    url: string, maxCharacters = 400,
+    endpointUrl: string, maxCharacters = 400,
     keywords?: string[], maxSentences?: number, debug?: boolean): Promise<IAutoAbstractResponse> {
 
     const body: IAbstractInputBody = {
-      url,
+      url: endpointUrl,
       keywords: keywords ? keywords.join(',') : '',
     };
 
@@ -151,11 +152,11 @@ export class ApolloAiClient {
 
   // Endpoint Clustering
   public clustering(articles: IClusteringArticle[], threshold = 0.8, language = ClusteringLanguage.de) {
-    const url = new URL(this.apolloApiEndpoint + this.clusteringEndpoint);
-    url.searchParams.append('threshold', threshold.toString());
-    url.searchParams.append('language', language);
+    const endpointUrl = new URL(this.apolloApiEndpoint + this.clusteringEndpoint);
+    endpointUrl.searchParams.append('threshold', threshold.toString());
+    endpointUrl.searchParams.append('language', language);
 
-    return fetch(url.toString(), {
+    return fetch(endpointUrl.toString(), {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -169,7 +170,7 @@ export class ApolloAiClient {
 
   // Endpoint continuedClustering + Autoabstract
   public continuedClustering(
-    newArticles: IArticle[] | string[],
+    newArticles: Array<IArticle | string>,
     presentArticles: IContinuousClusteringResultItem[] = [],
     options: IContinuousClusteringOptions = {}): Promise<IContinuousClusteringResponse> {
 
@@ -177,36 +178,65 @@ export class ApolloAiClient {
 
     if (presentArticles && presentArticles.length > 0) {
       parameters.result = presentArticles;
+    } else {
+      parameters.result = [];
+    }
+
+    const newArticleIds = newArticles.map((nA: IArticle | string): string => {
+      if (typeof nA === 'string') {
+        return nA;
+      } else {
+        return nA.id;
+      }
+    });
+    const presentArticleIds = presentArticles.map((pA, index) => {
+      if (pA && pA.article && pA.article.id) {
+        return pA.article.id;
+      } else {
+        throw new Error('Invalid present Article' + pA + ' at position ' + index);
+      }
+    });
+    const duplicates = _.intersection(newArticleIds, presentArticleIds);
+    if (duplicates.length !== 0) {
+      throw new Error('Passing the same article in newArticles and presentArticles is not allowed.');
     }
 
     const url = new URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
 
     if (options.abstractMaxChars !== undefined) {
-      url.searchParams.append('maxChars', options.abstractMaxChars.toString());
-    }
+        url.searchParams.append('maxChars', options.abstractMaxChars.toString());
+      }
 
     if (options.keywords) {
-      url.searchParams.append('keywords', options.keywords.join(','));
-    }
+        url.searchParams.append('keywords', options.keywords.join(','));
+      }
 
     if (options.threshold !== undefined) {
-      url.searchParams.append('threshold', options.threshold.toString());
-    }
+        url.searchParams.append('threshold', options.threshold.toString());
+      }
 
     if (options.language) {
-      url.searchParams.append('language', options.language);
-    }
+        url.searchParams.append('language', options.language);
+      }
 
     return fetch(url.toString(), {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + this.apiKey,
-      },
-      body: JSON.stringify(parameters),
-      timeout: 300000,
-    }).then((clusteringResult) => clusteringResult.json() as Promise<IContinuousClusteringResponse>);
-  }
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + this.apiKey,
+        },
+        body: JSON.stringify(parameters),
+        timeout: 300000,
+      }).then((clusteringResult) => {
+        return (clusteringResult.json() as Promise<IContinuousClusteringResponse>).catch((e) => {
+          console.log(e);
+          return Promise.reject(e);
+        });
+      }, (error: any) => {
+        console.log(error);
+        return Promise.reject(error);
+      });
+    }
 
 }

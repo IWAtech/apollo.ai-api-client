@@ -26,9 +26,11 @@
     "build": "yarn run lint && echo Using TypeScript && tsc --version && tsc --pretty -p ."
   },
   "dependencies": {
+    "lodash": "^4.17.11",
     "node-fetch": "^1.7.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.116",
     "@types/node": "^8.0.14",
     "@types/node-fetch": "^1.6.7",
     "tslint": "^5.4.3",
