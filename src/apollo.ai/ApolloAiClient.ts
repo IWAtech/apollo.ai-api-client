@@ -230,11 +230,15 @@ export class ApolloAiClient {
         timeout: 300000,
       }).then((clusteringResult) => {
         return (clusteringResult.json() as Promise<IContinuousClusteringResponse>).catch((e) => {
-          console.log(e);
+          if (this.debug) {
+            console.error(e);
+           }
           return Promise.reject(e);
         });
       }, (error: any) => {
-        console.log(error);
+        if (this.debug) {
+         console.error(error);
+        }
         return Promise.reject(error);
       });
     }
