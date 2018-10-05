@@ -63,12 +63,12 @@ export interface IContinuousClusteringInput extends IContinuousClustering {
 }
 
 export interface IContinuousClusteringResponse extends IContinuousClustering {
-  invalidArticles: Array<string | IArticle>;
+  invalidArticles: Array<string | IArticle>; // TODO: define if only string!
 }
 
 export interface IContinuousClusteringResultItem {
   article: IArticle;
-  related: string[];
+  related: string[]; // array of article ids
 }
 
 export interface IAbstractInputBody {
@@ -193,12 +193,16 @@ export class ApolloAiClient {
       if (pA && pA.article && pA.article.id) {
         return pA.article.id;
       } else {
-        throw new Error('Invalid present Article' + pA + ' at position ' + index);
+        return Promise.reject(
+          new Error('Invalid present Article' + pA + ' at position ' + index),
+        );
       }
     });
     const duplicates = _.intersection(newArticleIds, presentArticleIds);
     if (duplicates.length !== 0) {
-      throw new Error('Passing the same article in newArticles and presentArticles is not allowed.');
+      return Promise.reject(
+        new Error('Passing the same article in newArticles and presentArticles is not allowed.'),
+      );
     }
 
     const url = new URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
@@ -232,7 +236,7 @@ export class ApolloAiClient {
         return (clusteringResult.json() as Promise<IContinuousClusteringResponse>).catch((e) => {
           if (this.debug) {
             console.error(e);
-           }
+          }
           return Promise.reject(e);
         });
       }, (error: any) => {
