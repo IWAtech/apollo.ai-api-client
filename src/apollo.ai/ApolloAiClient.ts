@@ -174,54 +174,18 @@ export class ApolloAiClient {
     presentArticles: IContinuousClusteringResultItem[] = [],
     options: IContinuousClusteringOptions = {}): Promise<IContinuousClusteringResponse> {
 
-    const parameters: IContinuousClusteringInput = {newArticles};
-
-    if (presentArticles && presentArticles.length > 0) {
-      parameters.result = presentArticles;
-    } else {
-      parameters.result = [];
+    try {
+      this.checkForDuplicateArticleIds(newArticles, presentArticles);
+    } catch ( e ) {
+      return Promise.reject(e);
     }
 
-    const newArticleIds = newArticles.map((nA: IArticle | string): string => {
-      if (typeof nA === 'string') {
-        return nA;
-      } else {
-        return nA.id;
-      }
-    });
-    const presentArticleIds = presentArticles.map((pA, index) => {
-      if (pA && pA.article && pA.article.id) {
-        return pA.article.id;
-      } else {
-        return Promise.reject(
-          new Error('Invalid present Article' + pA + ' at position ' + index),
-        );
-      }
-    });
-    const duplicates = _.intersection(newArticleIds, presentArticleIds);
-    if (duplicates.length !== 0) {
-      return Promise.reject(
-        new Error('Passing the same article in newArticles and presentArticles is not allowed.'),
-      );
-    }
+    const parameters: IContinuousClusteringInput = {
+      newArticles,
+      result: presentArticles,
+    };
 
-    const url = new URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
-
-    if (options.abstractMaxChars !== undefined) {
-        url.searchParams.append('maxChars', options.abstractMaxChars.toString());
-      }
-
-    if (options.keywords) {
-        url.searchParams.append('keywords', options.keywords.join(','));
-      }
-
-    if (options.threshold !== undefined) {
-        url.searchParams.append('threshold', options.threshold.toString());
-      }
-
-    if (options.language) {
-        url.searchParams.append('language', options.language);
-      }
+    const url = this.buildContinuousClusteringUrl(options);
 
     return fetch(url.toString(), {
         method: 'POST',
@@ -247,4 +211,46 @@ export class ApolloAiClient {
       });
     }
 
+    protected checkForDuplicateArticleIds(newArticles: Array<IArticle | string>, presentArticles: IContinuousClusteringResultItem[]) {
+      const newArticleIds = newArticles.map((nA: IArticle | string): string => {
+        if (typeof nA === 'string') {
+          return nA;
+        } else {
+          return nA.id;
+        }
+      });
+      const presentArticleIds = presentArticles.map((pA, index) => {
+        if (pA && pA.article && pA.article.id) {
+          return pA.article.id;
+        } else {
+          throw new Error('Invalid present Article' + pA + ' at position ' + index);
+        }
+      });
+      const duplicates = _.intersection(newArticleIds, presentArticleIds);
+      if (duplicates.length !== 0) {
+        throw new Error('Passing the same article in newArticles and presentArticles is not allowed.');
+      }
+    }
+
+    protected buildContinuousClusteringUrl(options: IContinuousClusteringOptions): URL {
+      const url = new URL(this.apolloApiEndpoint + this.combinedApiEndpoint);
+
+      if (options.abstractMaxChars !== undefined) {
+          url.searchParams.append('maxChars', options.abstractMaxChars.toString());
+      }
+
+      if (options.keywords) {
+          url.searchParams.append('keywords', options.keywords.join(','));
+      }
+
+      if (options.threshold !== undefined) {
+          url.searchParams.append('threshold', options.threshold.toString());
+      }
+
+      if (options.language) {
+          url.searchParams.append('language', options.language);
+      }
+
+      return url;
+    }
 }
