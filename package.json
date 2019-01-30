@@ -24,6 +24,7 @@
     "clean": "rm -rf lib",
     "lint": "tslint -c tslint.json \"src/**/*.ts\"",
     "build": "yarn run lint && echo Using TypeScript && tsc --version && tsc --pretty -p .",
+    "watch": "yarn run build -- --watch",
     "test": "ts-node node_modules/jasmine/bin/jasmine --config=jasmine.json"
   },
   "dependencies": {
